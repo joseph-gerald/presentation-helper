@@ -9,6 +9,7 @@ mkey = MouseKey()
 screen_width, screen_height = mkey.get_screen_resolution()
 
 def clamp(val, min_val, max_val):
+    #print(val, min_val, max_val)
     return min(max(val, min_val), max_val)
 
 async def handle_connection(websocket, path):
@@ -25,16 +26,25 @@ async def handle_connection(websocket, path):
 
             mkey.get_cursor_position()
 
-            print(method, data)
+            #print(method, data)
             
             if (method == "move"):
                 x, y = data.split(",")
-                cur_x, cur_y = mkey.get_cursor_position()
-                
-                new_x = clamp(cur_x + int(x), 0, screen_width)
-                new_y = clamp(cur_y + int(y), 0, screen_height)
+                if (x == "0" and y == "0"):
+                    continue
 
-                mkey.move_to_natural(new_x, new_y)
+                cur_x, cur_y = mkey.get_cursor_position()
+                print("MOVE", x, y)
+                
+                new_x = clamp(cur_x + float(x), 0, screen_width)
+                new_y = clamp(cur_y + float(y), 0, screen_height)
+
+                print("NEW", new_x, new_y)
+
+                try:
+                    mkey.move_to(new_x, new_y)
+                except Exception as e:
+                    pass
 
             if (method == "version"):
                 await websocket.send(f"Presentation-Agent/{VERSION}")

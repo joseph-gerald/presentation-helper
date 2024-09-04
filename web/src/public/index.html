@@ -11,7 +11,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind.config.js"></script>
 
-    <script src="/lib/toast.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ireade/Toast.js@master/dist/css/Toast.min.css">
 
     <link rel="stylesheet" href="style/global.css">
@@ -20,9 +19,15 @@
 </head>
 
 <body class="font-body text-[#dcdcdc] bg-[#0a0a0a] min-h-screen">
+    <div class="fixed bottom-4 right-4">
+        <p class="opacity-65 text-sm">
+            Presentation Helper / DEV 0.1.0
+        </p>
+    </div>
+
     <div id="main" class="container mx-auto min-h-screen flex flex-col items-center justify-center">
         <div id="container" class="w-full max-w-[730px] px-5 flex flex-col items-center">
-            <div id="intro" class="flex flex-col items-center hidden">
+            <div id="intro" class="flex flex-col items-center">
                 <p>
                     <a href="#" id="init-present" class="font-semibold hover:underline">present</a> <span
                         class="text-sm">or</span>
@@ -30,32 +35,22 @@
                 </p>
             </div>
 
-            <div id="presenter" class="hidden">
+            <div id="presenter-search" class="hidden">
                 <div class="flex justify-between gap-20">
                     <div class="flex flex-col items-center gap-4">
                         <p class="mt-3">
                         <h1 id="searching-loop" class="text-xl font-semibold">
                             Searching for desktop agent
-
-                            <script>
-                                const searchingLoop = document.getElementById("searching-loop");
-
-                                let dots = 0;
-                                setInterval(() => {
-                                    dots++;
-                                    if (dots > 3) dots = 0;
-
-                                }, 500);
-                            </script>
                         </h1>
 
-                        <span class="flex absolute h-3 w-3 -mt-1 -mr-1">
+                        <span class="flex absolute h-3 w-3 -mt-1">
                             <span
                                 class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                         </span>
 
-                        <small class="bg-[#FF604018] border border-[#FF604018] p-2 flex items-center rounded text-xs">
+                        <small id="presenter-search-no-agent-warning"
+                            class="bg-[#FF604018] border border-[#FF604018] p-2 flex items-center rounded text-xs hidden">
                             <svg class="fill-orange-900 mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16"
                                 aria-hidden="true">
                                 <path
@@ -63,31 +58,68 @@
                                 </path>
                             </svg>
 
-                            No agent found. <a href="#" class="font-semibold hover:underline ml-2">Click Here To
-                                Download</a>
+                            <span class="message">No agent found.<a href="#" onclick="showDownload()"
+                                    class="font-semibold hover:underline ml-2">Click Here To
+                                    Download</a></span>
                         </small>
                         </p>
                     </div>
                 </div>
             </div>
 
-            <div id="presenter" class="">
+            <div id="presenter-connect" class="hidden">
                 <div class="flex justify-between gap-20">
                     <div class="flex flex-col items-center gap-4">
                         <small class="mt-8">Connect with the code</small>
-                        <p class="text-7xl font-semibold font-mono -mt-4">
-                            FS9D
+                        <p id="link-code" class="text-7xl font-semibold font-mono -mt-4">
+                            XXXX
                         </p>
 
-                        <h1 id="searching-loop" class="text-lg< font-semibold">
-                            Awaiting Helper
-                        </h1>
-
-                        <span class="flex absolute h-3 w-3 -mt-1 -mr-1">
+                        <span class="flex absolute h-3 w-3 -mt-1">
                             <span
                                 class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                         </span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="presenter-linked" class="hidden">
+                <div class="flex justify-between gap-20">
+                    <div class="flex flex-col gap-2 relative">
+                        <h1 id="searching-loop" class="text-xl font-semibold">
+                            Connected
+                        </h1>
+
+                        <small>
+                            You are now connected, <b>DO NOT</b> close this tab
+                        </small>
+
+                        <span class="flex absolute h-3 w-3 -left-6 mt-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="helper-linked" class="hidden">
+                <div class="fixed bottom-0 left-0 w-screen h-screen">
+                    <div class="flex flex-col items-end justify-end h-full">
+                        <div class="w-full h-full max-h-[60vw] flex">
+                            <button id="right-click" class="w-full bg-red-900" draggable="true">
+                                RIGHT CLICK
+                            </button>
+                        </div>
+                        <div class="w-full h-full max-h-[70vw] flex">
+                            <button id="left-click" class="w-full bg-red-900" draggable="true">
+                                LEFT CLICK
+                            </button>
+                            <div class="w-full">
+
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -96,29 +128,31 @@
                 <div class="flex justify-between gap-20">
                     <div class="flex flex-col items-center gap-4">
                         <h1 id="searching-loop" class="text-xl font-semibold">
-                            Missing Sensors
+                            Enter Your Code
                         </h1>
 
-                        <small
-                            class="bg-[#FF604018] border border-[#FF604018] p-2 flex lg:items-center rounded text-xs">
-                            <svg class="fill-orange-900 mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16"
-                                aria-hidden="true">
-                                <path
-                                    d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z">
-                                </path>
-                            </svg>
+                        <div class="flex flex-col gap-2">
+                            <input type="number" id="link-code-input"
+                                class="rounded bg-[#0000004f] border border-[#0000004f] py-2 outline-none text-center uppercase"
+                                type="text" placeholder="code e.g 1234">
 
-                            <p>
-                                The following was not found: <a href="#"
-                                    class="font-semibold hover:underline">Gyroscope</a>
-                            </p>
-                        </small>
+                            <button id="connect-btn"
+                                class="rounded bg-[#40404020] opacity-65 py-2 text-sm font-semibold">
+                                Connect
+                            </button>
+                        </div>
 
+                        <!-- TODO: Add same network suggestions -->
+                    </div>
+                </div>
+            </div>
 
-                        <a href="#" class="hover:underline font-semibold mt-1">
-                            <small onclick="show('intro')">> Go Back</small>
-                        </a>
-                        </p>
+            <div id="helper-check" class="hidden">
+                <div class="flex justify-between gap-20">
+                    <div class="flex flex-col items-center gap-4">
+                        <h1 id="searching-loop" class="text-xl font-semibold">
+                            Checking Sensors
+                        </h1>
                     </div>
                 </div>
             </div>
@@ -141,7 +175,7 @@
                                 </path>
                             </svg>
 
-                            <p>
+                            <p id="helper-gyro-error">
                                 The following was not found: <a href="#"
                                     class="font-semibold hover:underline">Gyroscope</a>
                             </p>
@@ -157,39 +191,162 @@
             </div>
         </div>
     </div>
+
+    <div id="overlay"
+        class="fixed left-0 top-0 h-screen w-screen bg-[#0a0a0a60] backdrop-blur-md flex flex-col justify-center items-center hidden">
+        <div class="content">
+            <div class="bg-[#0000006f] p-4 shadow-lg">
+                <h1 class="text-xl font-semibold">Download Agent</h1>
+                <small>Download as on of the following formats</small>
+
+                <ul class="mt-4 text-sm flex flex-col gap-2">
+                    <li class="hover:underline">
+                        <a href="">
+                            Windows Executable (.exe)
+                        </a>
+                    </li>
+                    <li class="hover:underline">
+                        <a href="">
+                            Python Source (.py)
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </body>
 <script>
+    const VERSION = "0.1.0";
+    let AGENT_VERSION = null;
+    let currentScreen = "intro";
+    let reconnect = false;
+    let position = { x: 0, y: 0, old: { x: 0, y: 0 } };
+    let lastGyroUpdate = Date.now();
+
+    const [UPDATE_INTERVAL_HELPER_MS, UPDATE_INTERVAL_AGENT_MS] = [0, 0];
+
+    let rotationData = {
+        alpha: 0,
+        beta: 0,
+        gamma: 0
+    }
+
     const main = document.getElementById("main");
     const container = document.getElementById("container");
+    const overlay = document.getElementById("overlay");
+    const overlayContent = overlay.querySelector(".content");
+
+    overlay.onclick = (e) => {
+        if (e.target == overlay) hideOverlay();
+    }
+
+    function showOverlay() {
+        overlay.classList.remove("hidden");
+        overlayContent.animate([
+            { opacity: 0 },
+            { opacity: 0.2 },
+            { opacity: 1 }
+        ], {
+            duration: 400,
+            easing: "ease-in-out"
+        });
+
+        overlay.animate([
+            { opacity: 0.3 },
+            { opacity: 1 },
+        ], {
+            duration: 250,
+            easing: "ease-in-out"
+        });
+    }
+
+    function hideOverlay() {
+        overlay.animate([
+            { opacity: 1 },
+            { opacity: 0.1 },
+            { opacity: 0 }
+        ], {
+            duration: 300,
+            easing: "ease-in-out"
+        });
+
+        setTimeout(() => {
+            overlay.classList.add("hidden");
+        }, 195);
+    }
 
     const screens = {
         intro: document.getElementById("intro"),
-        presenter: document.getElementById("presenter"),
-        helper: document.getElementById("helper")
+
+        presenter_search: document.getElementById("presenter-search"),
+        presenter_connect: document.getElementById("presenter-connect"),
+        presenter_linked: document.getElementById("presenter-linked"),
+
+        helper: document.getElementById("helper"),
+        helper_check: document.getElementById("helper-check"),
+        helper_no_gyro: document.getElementById("helper-no-gyro"),
+        helper_linked: document.getElementById("helper-linked")
     }
 
     const initPresent = document.getElementById("init-present");
     const initHelp = document.getElementById("init-help");
 
+    const noAgentWarning = document.getElementById("presenter-search-no-agent-warning");
+    const gyroError = document.getElementById("helper-gyro-error");
+
+    const linkCode = document.getElementById("link-code");
+    const linkCodeInput = document.getElementById("link-code-input");
+
+    const connectBtn = document.getElementById("connect-btn");
+
+    const [rightClick, leftClick] = [document.getElementById("right-click"), document.getElementById("left-click")];
+
+    linkCodeInput.value = "";
+
     function show(name) {
+        currentScreen = name;
+
         Object.keys(screens).forEach(screen => {
             screens[screen].classList.add("hidden");
         });
 
         screens[name].classList.remove("hidden");
+        screens[name].animate([
+            { opacity: 0 },
+            { opacity: 0.2 },
+            { opacity: 1 }
+        ], {
+            duration: 500,
+            easing: "ease-in-out"
+        });
     }
 
     initPresent.addEventListener("click", (e) => {
         e.preventDefault();
-        show("presenter");
+        show("presenter_search");
+
+        initPresenter();
     });
 
     initHelp.addEventListener("click", (e) => {
         e.preventDefault();
-        show("helper");
+        show("helper_check");
+        initHelper();
     });
-    
-    const socket = new WebSocket("ws://localhost:8765");
+
+    const sessionID = Math.random().toString(36).substring(7);
+
+    localStorage.setItem("date_session_id_set", Date.now());
+
+    if (!document.cookie.includes("sessionID") || localStorage.getItem("date_session_id_set") < Date.now() - (3 * 60 * 60 * 1000)) {
+        const expirationDate = new Date();
+        expirationDate.setTime(expirationDate.getTime() + (3 * 60 * 60 * 1000));
+        document.cookie = `sessionID=${sessionID}; expires=${expirationDate.toUTCString()}; Path=/;`;
+    }
+
+    let agentSocket = null;
+    const protocol = location.protocol == "http:" ? "ws://" : "wss://";
+    const socket = new WebSocket(protocol + window.location.host);
 
     socket.onclose = () => {
         location.reload();
@@ -200,6 +357,324 @@
         setInterval(() => { socket.send("keepalive/" + keepaliveCount++); }, 60 * 1000);
 
         console.log("connected");
+    }
+
+    socket.onmessage = onServerMessage;
+
+    async function handleDeviceOrientation(event) {
+        const [deltaAlpha, deltaBeta, deltaGamma] = [
+            rotationData.alpha - event.alpha,
+            rotationData.beta - event.beta,
+            rotationData.gamma - event.gamma
+        ]
+
+        rotationData = {
+            alpha: event.alpha,
+            beta: event.beta,
+            gamma: event.gamma
+        }
+
+        switch (currentScreen) {
+            case "helper_linked":
+                rightClick.innerHTML = `${deltaAlpha}, ${deltaBeta}, ${deltaGamma}`;
+                if (Math.abs(deltaAlpha + deltaBeta) > 0) {
+                    position.x += deltaAlpha;
+                    position.y += deltaBeta;
+
+                    if (lastGyroUpdate + UPDATE_INTERVAL_HELPER_MS < Date.now()) {
+                        socket.send(JSON.stringify({
+                            type: "gyro",
+                            data: {
+                                alpha: position.x,
+                                beta: position.y
+                            }
+                        }));
+
+                        position.old.x = position.x;
+                        position.old.y = position.y;
+
+                        lastGyroUpdate = Date.now();
+
+                        position.x = 0;
+                        position.y = 0;
+                    }
+                }
+                break;
+        }
+    }
+
+    async function initHelper() {
+        try {
+            if (!window.DeviceOrientationEvent) {
+                throw new Error("DeviceOrientationEvent not supported");
+            }
+
+            let fired = false;
+
+            window.ondeviceorientation = event => {
+                fired = true;
+                window.ondeviceorientation = handleDeviceOrientation;
+
+                show("helper");
+                linkCodeInput.focus();
+            };
+
+            setTimeout(() => {
+                if (!fired) show("helper_no_gyro");
+            }, 500); // if false then you shouldnt be using that phone in the first place
+        } catch (error) {
+            show("helper_no_gyro");
+        }
+    }
+
+    async function initPresenter(first = true) {
+        const socket = new WebSocket("ws://127.0.0.1:8765");
+        agentSocket = socket;
+
+        let connected = false;
+
+        setTimeout(() => {
+            socket.onerror();
+            socket.onerror = () => { };
+
+            if (!connected) {
+                initPresenter(false);
+                socket.close();
+            }
+        }, 1000);
+
+        socket.onclose = () => {
+            initPresenter(false);
+        }
+
+        socket.onopen = () => {
+            console.log("connected to helper");
+
+            connected = true;
+            socket.send("version:");
+        }
+
+        socket.onerror = (error) => {
+            if (!connected && first) {
+                noAgentWarning.classList.remove("hidden");
+                noAgentWarning.animate([
+                    { scale: 0.15, opacity: 0 },
+                    { scale: 1, opacity: 1 }
+                ], {
+                    duration: 450,
+                    easing: "ease-in-out"
+                });
+            }
+        }
+
+        socket.onmessage = onAgentMessage;
+    }
+
+
+
+    function showDownload() {
+        showOverlay();
+    }
+
+    async function onServerMessage(event) {
+        const data = JSON.parse(event.data);
+
+        switch (data.type) {
+            case "init_link":
+                console.log(data.code);
+                linkCode.innerHTML = data.code;
+                break;
+
+            case "link":
+                const message = data.message;
+                const code = data.code;
+
+                switch (message) {
+                    case "not_found":
+                        connectBtn.innerHTML = "ROOM NOT FOUND";
+                        connectBtn.style.backgroundColor = "#FF404040";
+                        break;
+                    case "linked":
+                        const role = data.role;
+
+                        if (role == "presenter") {
+                            show("presenter_linked");
+                        } else {
+                            show("helper_linked");
+                        }
+                        break;
+                    case "already_linked":
+                        connectBtn.innerHTML = "ALREADY CONNECTED";
+                        connectBtn.style.backgroundColor = "#FF404040";
+                        break;
+                }
+                break;
+
+            case "reconnect":
+                reconnect = true;
+
+                switch (data.role) {
+                    case "presenter":
+                        show("presenter_linked");
+                        initPresenter();
+                        break;
+                    case "helper":
+                        show("helper_linked");
+
+                        window.ondeviceorientation = event => {
+                            fired = true;
+                            window.ondeviceorientation = handleDeviceOrientation;
+                            linkCodeInput.focus();
+                        };
+                        break;
+                }
+                break;
+
+            case "gyro":
+                const alpha = data.data.alpha;
+                const beta = data.data.beta;
+
+                const multiplierX = window.screen.width / 100;
+                const multiplierY = window.screen.height / 80;
+
+                if (agentSocket.readyState != WebSocket.OPEN) break;
+
+                position.x += alpha * multiplierX;
+                position.y += beta * multiplierY;
+
+                if (Date.now() - lastGyroUpdate > UPDATE_INTERVAL_AGENT_MS) {
+                    const deltaX = position.x - position.old.x;
+                    const deltaY = position.y - position.old.y;
+
+                    if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) break;
+
+                    agentSocket.send(`move:${deltaX},${deltaY}`);
+
+                    position.old.x = position.x;
+                    position.old.y = position.y;
+
+                    lastGyroUpdate = Date.now();
+                }
+        }
+    }
+
+    linkCodeInput.oninput = (e) => {
+        if (e.target.value.length == 4) {
+            socket.send(JSON.stringify({
+                type: "link",
+                code: e.target.value
+            }));
+        } else {
+            if (e.target.value.length > 4) {
+                e.target.value = e.target.value.substring(0, 4);
+
+                connectBtn.innerHTML = "CODE TOO LONG";
+                connectBtn.style.backgroundColor = "#FF404040";
+
+                return;
+            }
+
+            connectBtn.innerHTML = "Connect";
+            connectBtn.style.backgroundColor = "#40404020";
+        }
+    }
+
+    async function onAgentMessage(event) {
+        const data = event.data.split("/");
+
+        switch (data[0]) {
+            case "Presentation-Agent":
+                if (reconnect) break;
+
+                AGENT_VERSION = data[1];
+
+                if (AGENT_VERSION != VERSION) {
+                    const message = noAgentWarning.querySelector(".message");
+
+                    message.innerHTML = `A newer version of the agent is available.<br> <a href="#" onclick="ignoreOutdatedAgent()" class="font-semibold hover:underline">Continue Anyway</a> or <a href="#" onclick="showDownload()" class="font-semibold hover:underline">Download Latest</a>`;
+                    noAgentWarning.classList.remove("hidden");
+                    noAgentWarning.animate([
+                        { scale: 0.15, opacity: 0 },
+                        { scale: 1, opacity: 1 }
+                    ], {
+                        duration: 450,
+                        easing: "ease-in-out"
+                    });
+
+                    window.ignoreOutdatedAgent = () => {
+                        startLink();
+                    }
+                    return;
+                }
+
+                startLink();
+                break;
+        }
+    }
+
+    async function startLink() {
+        show("presenter_connect");
+        socket.send(JSON.stringify({
+            type: "init_link"
+        }));
+    }
+
+    let rightStart = -1;
+    let leftStart = -1;
+
+    rightClick.ontouchstart = (e) => {
+        rightStart = Date.now();
+    }
+
+    leftClick.ontouchstart = (e) => {
+        leftStart = Date.now();
+    }
+
+    rightClick.ontouchend = (e) => {
+        const delta = Date.now() - rightStart;
+
+        if (delta < 80) {
+            alert("right click");
+        }
+    }
+
+    leftClick.ontouchend = (e) => {
+        const delta = Date.now() - leftStart;
+
+        if (delta < 80) {
+            alert("left click");
+        }
+    }
+
+    rightClick.ondragstart = (e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text", "right click");
+    }
+
+    rightClick.ondragover = (e) => {
+        console.log(e.clientX, e.clientY);
+        rightClick.innerHTML = `${e.clientX}, ${e.clientY}`;
+        e.dataTransfer.dropEffect = "move";
+
+        e.preventDefault();
+    }
+
+    rightClick.ontouchmove = (e) => {
+        rightClick.innerHTML = `${e.touches[0].clientX}, ${e.touches[0].clientY}`;
+    }
+
+    leftClick.ondragstart = (e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text", "right click");
+    }
+
+    leftClick.ondragend = (e) => {
+        leftClick.innerHTML = "LEFT CLICK";
+    }
+
+    leftClick.ondragover = (e) => {
+        console.log(e.clientX, e.clientY);
+        leftClick.innerHTML = `${e.clientX}, ${e.clientY}`;
     }
 </script>
 
