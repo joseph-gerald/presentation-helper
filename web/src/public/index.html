@@ -20,7 +20,7 @@
 
 <body class="font-body text-[#dcdcdc] bg-[#0a0a0a] min-h-screen">
     <div class="fixed bottom-4 right-4">
-        <p class="opacity-65 text-sm">
+        <p class="opacity-65 text-sm select-none cursor-default">
             Presentation Helper / DEV 0.1.0
         </p>
     </div>
@@ -222,8 +222,9 @@
     let reconnect = false;
     let position = { x: 0, y: 0, old: { x: 0, y: 0 } };
     let lastGyroUpdate = Date.now();
+    let transmitGyro = false;
 
-    const [UPDATE_INTERVAL_HELPER_MS, UPDATE_INTERVAL_AGENT_MS] = [0, 0];
+    const [UPDATE_INTERVAL_HELPER_MS, UPDATE_INTERVAL_AGENT_MS] = [50, 10];
 
     let rotationData = {
         alpha: 0,
@@ -316,7 +317,7 @@
             { opacity: 0.2 },
             { opacity: 1 }
         ], {
-            duration: 500,
+            duration: 300 ,
             easing: "ease-in-out"
         });
     }
@@ -376,8 +377,7 @@
 
         switch (currentScreen) {
             case "helper_linked":
-                rightClick.innerHTML = `${deltaAlpha}, ${deltaBeta}, ${deltaGamma}`;
-                if (Math.abs(deltaAlpha + deltaBeta) > 0) {
+                if (Math.abs(deltaAlpha + deltaBeta) > 0 && transmitGyro) {
                     position.x += deltaAlpha;
                     position.y += deltaBeta;
 
@@ -402,9 +402,32 @@
                 break;
         }
     }
-
+    function requestGyroPermission() {
+        if (typeof (DeviceOrientationEvent) !== "undefined" && typeof (DeviceOrientationEvent.requestPermission) === "function") {
+            DeviceOrientationEvent.requestPermission()
+                .then(response => {
+                    if (response == "granted") {
+                        show("helper");
+                    } else {
+                        show("helper_no_gyro");
+                    }
+                })
+                .catch(console.error)
+        } else {
+            show("helper_no_gyro");
+        }
+    }
     async function initHelper() {
         try {
+            requestGyroPermission();
+
+            navigator.permissions.query({ name: "accelerometer" }).then(result => {
+                if (result.state == "denied") {
+                    show("helper_no_gyro");
+                    return;
+                }
+            });
+
             if (!window.DeviceOrientationEvent) {
                 throw new Error("DeviceOrientationEvent not supported");
             }
@@ -412,6 +435,12 @@
             let fired = false;
 
             window.ondeviceorientation = event => {
+                if (event.alpha == null || event.beta == null) {
+                    if (currentScreen == "helper_check") show("helper_no_gyro");
+                    fired = true;
+                    return;
+                }
+
                 fired = true;
                 window.ondeviceorientation = handleDeviceOrientation;
 
@@ -444,7 +473,9 @@
         }, 1000);
 
         socket.onclose = () => {
-            initPresenter(false);
+            setTimeout(() => {
+                if (connected) initPresenter(false);
+            }, 1000);
         }
 
         socket.onopen = () => {
@@ -555,6 +586,15 @@
 
                     lastGyroUpdate = Date.now();
                 }
+                break;
+
+            case "click":
+                const button = data.button;
+
+                if (agentSocket.readyState != WebSocket.OPEN) break;
+
+                agentSocket.send(`click:${button}`);
+                break;
         }
     }
 
@@ -622,6 +662,8 @@
     let rightStart = -1;
     let leftStart = -1;
 
+    const clickWindow = 150;
+
     rightClick.ontouchstart = (e) => {
         rightStart = Date.now();
     }
@@ -633,22 +675,33 @@
     rightClick.ontouchend = (e) => {
         const delta = Date.now() - rightStart;
 
-        if (delta < 80) {
-            alert("right click");
+        if (delta < clickWindow) {
+            socket.send(JSON.stringify({
+                type: "click",
+                button: "right"
+            }));
         }
+
+        transmitGyro = false;
     }
 
     leftClick.ontouchend = (e) => {
         const delta = Date.now() - leftStart;
 
-        if (delta < 80) {
-            alert("left click");
+        if (delta < clickWindow) {
+            socket.send(JSON.stringify({
+                type: "click",
+                button: "left"
+            }));
         }
+
+        transmitGyro = false;
     }
 
     rightClick.ondragstart = (e) => {
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text", "right click");
+        transmitGyro = true;
     }
 
     rightClick.ondragover = (e) => {
@@ -661,11 +714,17 @@
 
     rightClick.ontouchmove = (e) => {
         rightClick.innerHTML = `${e.touches[0].clientX}, ${e.touches[0].clientY}`;
+        transmitGyro = true;
+    }
+
+    rightClick.ondragend = (e) => {
+        transmitGyro = false;
     }
 
     leftClick.ondragstart = (e) => {
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text", "right click");
+        transmitGyro = true;
     }
 
     leftClick.ondragend = (e) => {
@@ -675,6 +734,15 @@
     leftClick.ondragover = (e) => {
         console.log(e.clientX, e.clientY);
         leftClick.innerHTML = `${e.clientX}, ${e.clientY}`;
+    }
+
+    leftClick.ontouchmove = (e) => {
+        leftClick.innerHTML = `${e.touches[0].clientX}, ${e.touches[0].clientY}`;
+        transmitGyro = true;
+    }
+
+    leftClick.ondragend = (e) => {
+        transmitGyro = false;
     }
 </script>
 

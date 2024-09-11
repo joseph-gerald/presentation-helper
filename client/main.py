@@ -1,5 +1,6 @@
 import asyncio
-import websockets
+from websockets.server import serve
+from websockets.exceptions import ConnectionClosed
 from mousekey import MouseKey
 import time
 
@@ -20,11 +21,14 @@ def move_mouse():
     delta_x, delta_y = new_x - cur_x, new_y - cur_y
     move_x, move_y = delta_x * 0.05, delta_y * 0.05
 
-    # print("CURSOR", cur_x, cur_y, "NEW", new_x, new_y, "DELTA", delta_x, delta_y)
+    # print("CURSOR", cur_x, cur_y, "NEW", new_x, new_y, "DELTA", delta_x, delta_y, "MOVE", move_x, move_y)
 
-    if (abs(delta_x) < 6 and abs(delta_y) < 6 or new_x == -1 or new_y == -1):
+    if (abs(delta_x) < 10 and abs(delta_y) < 10 or new_x == -1 or new_y == -1):
         new_x, new_y = -1, -1
+        #print(delta_x, delta_y)
         return
+
+    # print("DETLA", delta_x, delta_y)
 
     try:
         mkey.move_to(cur_x + move_x, cur_y + move_y)
@@ -37,6 +41,7 @@ def clamp(val, min_val, max_val):
 
 async def handle_connection(websocket, path):
     global new_x, new_y
+    print("Connected")
 
     try:
         while True:
@@ -76,22 +81,22 @@ async def handle_connection(websocket, path):
             if (method == "ping"):
                 await websocket.send(data)
         
-    except websockets.exceptions.ConnectionClosed:
+    except ConnectionClosed:
         pass
 
 def sync_mouse():
     while not kill_thread:
         move_mouse()
-        time.sleep(0.01)
+        time.sleep(0.005)
 
 if __name__ == "__main__":
-    start_server = websockets.serve(handle_connection, "localhost", 8765)
+    start_server = serve(handle_connection, "localhost", 30201)
 
     thread = Thread(target=sync_mouse)
     thread.start()
 
     try:
-        print("Starting server")
+        print("Listening on :30201")
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
     except KeyboardInterrupt:

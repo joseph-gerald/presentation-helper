@@ -19,6 +19,10 @@ function handleConnection(client, request) {
     if (session) {
         if (session.client.readyState != 3) session.client.close();
         session.client = client;
+        
+        if (session.link && !links[session.link.code]) {
+            return handleConnection(client, request);
+        }
 
         switch (session.role) {
             case "presenter":
@@ -27,6 +31,7 @@ function handleConnection(client, request) {
                     role: "presenter"
                 }));
 
+                session.link.connected.presenter = true;
                 session.link.presenter = session;
                 break;
 
@@ -36,6 +41,7 @@ function handleConnection(client, request) {
                     role: "helper"
                 }));
 
+                session.link.connected.helper = true;
                 session.link.helper = session;
                 break;
         }
@@ -43,7 +49,8 @@ function handleConnection(client, request) {
         session = {
             id: sessionID,
             ip: ip,
-            client: client
+            client: client,
+            role: "none"
         }
     }
 
@@ -51,6 +58,34 @@ function handleConnection(client, request) {
 
     function onClose() {
         console.log(`Connection Closed`);
+
+        if (session.link) {
+            if (session.role == "presenter" && session.link.helper?.client) {
+                session.link.helper.client.send(JSON.stringify({
+                    type: "link",
+                    message: "presenter_disconnected"
+                }));
+
+                session.link.connected.presenter = false;
+            } else {
+                session.link.presenter.client.send(JSON.stringify({
+                    type: "link",
+                    message: "helper_disconnected"
+                }));
+
+                session.link.connected.helper = false;
+            }
+
+            if (!session.link.connected.presenter && !session.link.connected.helper) {
+                delete links[session.link.code];
+
+                const indexPresenter = sessions.indexOf(session.link.presenter);
+                sessions.splice(indexPresenter, 1);
+
+                const indexHelper = sessions.indexOf(session.link.helper);
+                sessions.splice(indexHelper, 1);
+            }
+        }
     }
 
     function onMessage(data) {
@@ -84,7 +119,11 @@ function handleConnection(client, request) {
                             presenter: session,
                             helper: null,
 
-                            code: code
+                            code: code,
+                            connected: {
+                                presenter: true,
+                                helper: false
+                            }
                         }
 
                         session.link = link;
@@ -124,6 +163,7 @@ function handleConnection(client, request) {
                         session.link = link;
 
                         link.helper = session;
+                        link.connected.helper = true;
 
                         session.client.send(JSON.stringify({
                             type: "link",
@@ -164,6 +204,28 @@ function handleConnection(client, request) {
                     }));
                     break;
 
+                case "click":
+                    if (session.role != "helper") {
+                        session.client.send(JSON.stringify({
+                            type: "click",
+                            message: "not_helper"
+                        }));
+                        return;
+                    }
+
+                    if (!session.link) {
+                        session.client.send(JSON.stringify({
+                            type: "click",
+                            message: "not_linked"
+                        }));
+                        return;
+                    }
+
+                    session.link.presenter.client.send(JSON.stringify({
+                        type: "click",
+                        button: message.button
+                    }));
+                    break;
 
                 default:
                     console.log(`Unknown message type: ${message.type}`);
