@@ -18,14 +18,14 @@
     <title>Presentation Helper</title>
 </head>
 
-<body class="font-body text-[#dcdcdc] bg-[#0a0a0a] min-h-screen">
+<body class="font-body text-[#dcdcdc] bg-[#0a0a0a] min-h-dvh">
     <div class="fixed bottom-4 right-4">
         <p class="opacity-65 text-sm select-none cursor-default">
-            Presentation Helper / DEV 0.1.0
+            <span class="hidden sm:inline">Presentation Helper / </span>DEV 0.1.0
         </p>
     </div>
 
-    <div id="main" class="container mx-auto min-h-screen flex flex-col items-center justify-center">
+    <div id="main" class="container mx-auto min-h-dvh flex flex-col items-center justify-center">
         <div id="container" class="w-full max-w-[730px] px-5 flex flex-col items-center">
             <div id="intro" class="flex flex-col items-center">
                 <p>
@@ -50,7 +50,7 @@
                         </span>
 
                         <small id="presenter-search-no-agent-warning"
-                            class="bg-[#FF604018] border border-[#FF604018] p-2 flex items-center rounded text-xs hidden">
+                            class="bg-[#FF604018] border border-[#FF604018] p-2 flex items-center rounded text-xs opacity-0">
                             <svg class="fill-orange-900 mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16"
                                 aria-hidden="true">
                                 <path
@@ -104,17 +104,51 @@
                 </div>
             </div>
 
-            <div id="helper-linked" class="hidden">
-                <div class="fixed bottom-0 left-0 w-screen h-screen">
-                    <div class="flex flex-col items-end justify-end h-full">
-                        <div class="w-full h-full max-h-[60vw] flex">
-                            <button id="right-click" class="w-full bg-red-900" draggable="true">
-                                RIGHT CLICK
+            <div id="helper-linked" class="hidden w-screen h-dvh flex flex-col justify-between">
+                <div class="py-2 px-3 flex flex-col gap-4">
+                    <div>
+                        <div class="flex justify-between mt-1">
+                            <h4 class="text-sm ml-1">
+                                Mouse Movement
+                            </h4>
+
+                            <p id="ping">
+                                0ms
+                            </p>
+                        </div>
+                        <div class="flex gap-0.5 mt-1 text-xs">
+                            <button id="movement-gyro" class="bg-[#FFFFFF1A] rounded-l-lg rounded-r-sm p-2 px-4">
+                                Gyro
+                            </button>
+                            <button id="movement-touch" class="bg-[#AFAFAF10] rounded-sm p-2 px-4">
+                                Touch
+                            </button>
+                            <button id="movement-hybrid" class="bg-[#AFAFAF10] rounded-r-lg rounded-l-sm p-2 px-4">
+                                Hybrid
                             </button>
                         </div>
-                        <div class="w-full h-full max-h-[70vw] flex">
-                            <button id="left-click" class="w-full bg-red-900" draggable="true">
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm ml-1">
+                            Gyro Settings (x & y multiplier)
+                        </h4>
+                        <div class="flex gap-0.5 mt-1">
+                            <input id="gyro-x-multiplier" type="range" class="w-full" min="0" max="300" value="100">
+                            <input id="gyro-y-multiplier" type="range" class="w-full" min="0" max="300" value="100">
+                        </div>
+                    </div>
+                </div>
+                <div class="h-[70vh] p-4">
+                    <div class="flex flex-col items-end justify-end h-full">
+                        <div class="w-full h-full max-h-[60vw] flex">
+                            <button id="left-click" class="w-full bg-[#AFAFAF10] rounded-lg" draggable="true">
                                 LEFT CLICK
+                            </button>
+                        </div>
+                        <div class="w-full h-full max-h-[70vw] flex mt-2">
+                            <button id="right-click" class="w-full bg-[#AFAFAF10] rounded-lg" draggable="true">
+                                RIGHT CLICK
                             </button>
                             <div class="w-full">
 
@@ -193,11 +227,11 @@
     </div>
 
     <div id="overlay"
-        class="fixed left-0 top-0 h-screen w-screen bg-[#0a0a0a60] backdrop-blur-md flex flex-col justify-center items-center hidden">
+        class="fixed left-0 top-0 h-screen w-screen bg-[#0a0a0a60] backdrop-blur-sm flex flex-col justify-center items-center hidden">
         <div class="content">
-            <div class="bg-[#0000006f] p-4 shadow-lg">
+            <div class="bg-[#000000af] p-4 pt-3 shadow-lg rounded-lg">
                 <h1 class="text-xl font-semibold">Download Agent</h1>
-                <small>Download as on of the following formats</small>
+                <small>Download as one of the following formats</small>
 
                 <ul class="mt-4 text-sm flex flex-col gap-2">
                     <li class="hover:underline">
@@ -220,9 +254,11 @@
     let AGENT_VERSION = null;
     let currentScreen = "intro";
     let reconnect = false;
-    let position = { x: 0, y: 0, old: { x: 0, y: 0 } };
+    let position = { x: 0, y: 0, old: { x: 0, y: 0 }, old_x_percent: 0, old_y_percent: 0, x_percent: 0, y_percent: 0 };
     let lastGyroUpdate = Date.now();
     let transmitGyro = false;
+
+    let SCREEN_WIDTH, SCREEN_HEIGHT;
 
     const [UPDATE_INTERVAL_HELPER_MS, UPDATE_INTERVAL_AGENT_MS] = [50, 10];
 
@@ -245,7 +281,7 @@
         overlay.classList.remove("hidden");
         overlayContent.animate([
             { opacity: 0 },
-            { opacity: 0.2 },
+            { opacity: 0.8 },
             { opacity: 1 }
         ], {
             duration: 400,
@@ -253,10 +289,11 @@
         });
 
         overlay.animate([
-            { opacity: 0.3 },
+            { transform: "scale(0.9)" },
+            { transform: "scale(1.05)" },
             { opacity: 1 },
         ], {
-            duration: 250,
+            duration: 300,
             easing: "ease-in-out"
         });
     }
@@ -299,6 +336,29 @@
     const linkCodeInput = document.getElementById("link-code-input");
 
     const connectBtn = document.getElementById("connect-btn");
+    const pingIndicator = document.getElementById("ping");
+
+    const [
+        movementGyro,
+        movementTouch,
+        movementHybrid,
+
+        gyroXMultiplier,
+        gyroYMultiplier
+    ] = [
+        document.getElementById("movement-gyro"),
+        document.getElementById("movement-touch"),
+        document.getElementById("movement-hybrid"),
+
+        document.getElementById("gyro-x-multiplier"),
+        document.getElementById("gyro-y-multiplier")
+    ];
+
+    const movementButtons = [movementGyro, movementTouch, movementHybrid];
+
+    let movementType = "gyro";
+
+    let pings = [];
 
     const [rightClick, leftClick] = [document.getElementById("right-click"), document.getElementById("left-click")];
 
@@ -362,6 +422,34 @@
 
     socket.onmessage = onServerMessage;
 
+    movementButtons.forEach(button => {
+        button.onclick = (e) => {
+            movementButtons.forEach(b => {
+                b.classList.remove("bg-[#FFFFFF1A]");
+                b.classList.add("bg-[#AFAFAF10]");
+            });
+
+            button.classList.remove("bg-[#AFAFAF10]");
+            button.classList.add("bg-[#FFFFFF1A]");
+
+            button.animate([
+                { scale: 0.9 },
+                { scale: 1.05 },
+                { scale: 1 }
+            ], {
+                duration: 300,
+                easing: "ease-in-out"
+            });
+
+            movementType = button.id.split("-")[1];
+
+            socket.send(JSON.stringify({
+                type: "movement-type",
+                data: movementType
+            }));
+        }
+    });
+
     async function handleDeviceOrientation(event) {
         const [deltaAlpha, deltaBeta, deltaGamma] = [
             rotationData.alpha - event.alpha,
@@ -378,8 +466,8 @@
         switch (currentScreen) {
             case "helper_linked":
                 if (Math.abs(deltaAlpha + deltaBeta) > 0 && transmitGyro) {
-                    position.x += deltaAlpha;
-                    position.y += deltaBeta;
+                    position.x += deltaAlpha * gyroXMultiplier.value / 100;
+                    position.y += deltaBeta * gyroYMultiplier.value / 100;
 
                     if (lastGyroUpdate + UPDATE_INTERVAL_HELPER_MS < Date.now()) {
                         socket.send(JSON.stringify({
@@ -456,25 +544,27 @@
         }
     }
 
+    let reconnectTimeout = null;
+
     async function initPresenter(first = true) {
-        const socket = new WebSocket("ws://127.0.0.1:8765");
+        const socket = new WebSocket("ws://127.0.0.1:30201");
         agentSocket = socket;
+
+        console.log("connecting to agent");
 
         let connected = false;
 
-        setTimeout(() => {
-            socket.onerror();
-            socket.onerror = () => { };
-
-            if (!connected) {
-                initPresenter(false);
-                socket.close();
-            }
-        }, 1000);
-
         socket.onclose = () => {
-            setTimeout(() => {
-                if (connected) initPresenter(false);
+            console.log("disconnected from agent");
+        
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = setTimeout(() => {
+                if (socket.readyState == WebSocket.OPEN) {
+                    socket.close();
+                }
+                
+                console.log("INIT PRESENTER (ONCLOSE)");
+                initPresenter(false);
             }, 1000);
         }
 
@@ -487,7 +577,7 @@
 
         socket.onerror = (error) => {
             if (!connected && first) {
-                noAgentWarning.classList.remove("hidden");
+                noAgentWarning.classList.remove("opacity-0");
                 noAgentWarning.animate([
                     { scale: 0.15, opacity: 0 },
                     { scale: 1, opacity: 1 }
@@ -495,17 +585,29 @@
                     duration: 450,
                     easing: "ease-in-out"
                 });
+            } else {
+                clearTimeout(reconnectTimeout);
+                reconnectTimeout = setTimeout(() => {
+                    if (connected) {
+                        if (socket.readyState == WebSocket.OPEN) {
+                            socket.close();
+                        }
+                        
+                        console.log("INIT PRESENTER (ONCLOSE)");
+                        initPresenter(false);
+                    }
+                }, 1000);
             }
         }
 
         socket.onmessage = onAgentMessage;
     }
 
-
-
     function showDownload() {
         showOverlay();
     }
+
+    let skips = 0;
 
     async function onServerMessage(event) {
         const data = JSON.parse(event.data);
@@ -565,10 +667,10 @@
                 const alpha = data.data.alpha;
                 const beta = data.data.beta;
 
-                const multiplierX = window.screen.width / 100;
-                const multiplierY = window.screen.height / 80;
+                const multiplierX = SCREEN_WIDTH / 100;
+                const multiplierY = SCREEN_HEIGHT / 80;
 
-                if (agentSocket.readyState != WebSocket.OPEN) break;
+                if (agentSocket.readyState != WebSocket.OPEN || movementType == "touch") break;
 
                 position.x += alpha * multiplierX;
                 position.y += beta * multiplierY;
@@ -588,12 +690,82 @@
                 }
                 break;
 
+            case "movement-type":
+                movementType = data.data;
+                break;
+
+            case "touch":
+                const x = data.data.x;
+                const y = data.data.y;
+
+                if (agentSocket.readyState != WebSocket.OPEN || movementType == "gyro") break;
+
+                if (x == -1 && y == -1) {
+                    skips = 3;
+                }
+                
+                const x_pos = Math.round(x * SCREEN_WIDTH);
+                const y_pos = Math.round(y * SCREEN_HEIGHT);
+
+                const first = position.old_x_percent == 0 && position.old_y_percent == 0;
+
+                position.old_x_percent = position.x_percent;
+                position.old_y_percent = position.y_percent;
+
+                const delta_x_percent = x - position.old_x_percent;
+                const delta_y_percent = y - position.old_y_percent;
+
+                position.x_percent += delta_x_percent;
+                position.y_percent += delta_y_percent;
+
+                if (skips-- > 0) break;
+
+                position.x += delta_x_percent * SCREEN_WIDTH;
+                position.y += delta_y_percent * SCREEN_HEIGHT;
+
+                const deltaX = position.x - position.old.x;
+                const deltaY = position.y - position.old.y;
+
+                position.old.x = position.x;
+                position.old.y = position.y;
+                
+                agentSocket.send(`move:${deltaX},${deltaY}`);
+                break;
+
             case "click":
                 const button = data.button;
 
                 if (agentSocket.readyState != WebSocket.OPEN) break;
 
                 agentSocket.send(`click:${button}`);
+                break;
+
+            case "ping":
+                socket.send(JSON.stringify({
+                    type: "pong",
+                    data: data.data
+                }));
+                break;
+
+            case "pong":
+                const ping = Date.now() - data.data;
+
+                pings.push(ping);
+
+                if (pings.length > 10) {
+                    pings.shift();
+                }
+
+                const average = pings.reduce((a, b) => a + b) / pings.length;
+
+                pingIndicator.innerHTML = `${Math.round(average)}ms`;
+                    
+                setTimeout(() => {
+                    socket.send(JSON.stringify({
+                        type: "ping",
+                        data: Date.now()
+                    }));
+                }, 100);
                 break;
         }
     }
@@ -619,14 +791,28 @@
         }
     }
 
+    setInterval(() => {
+        if (currentScreen == "helper_linked") {    
+            socket.send(JSON.stringify({
+                type: "ping",
+                data: Date.now()
+            }));
+        }
+    }, 1000);
+
     async function onAgentMessage(event) {
         const data = event.data.split("/");
 
         switch (data[0]) {
             case "Presentation-Agent":
-                if (reconnect) break;
-
                 AGENT_VERSION = data[1];
+                // data[2].split("x");
+                const [WIDTH, HEIGHT] = data[2].split("x");
+                console.log(data[2])
+                SCREEN_WIDTH = parseInt(WIDTH);
+                SCREEN_HEIGHT = parseInt(HEIGHT);
+
+                if (reconnect) break;
 
                 if (AGENT_VERSION != VERSION) {
                     const message = noAgentWarning.querySelector(".message");
@@ -695,6 +881,16 @@
             }));
         }
 
+        if (movementType != "gyro") {
+            socket.send(JSON.stringify({
+                type: "touch",
+                data: {
+                    x: -1,
+                    y: -1
+                }
+            }));
+        }
+
         transmitGyro = false;
     }
 
@@ -706,15 +902,19 @@
 
     rightClick.ondragover = (e) => {
         console.log(e.clientX, e.clientY);
-        rightClick.innerHTML = `${e.clientX}, ${e.clientY}`;
-        e.dataTransfer.dropEffect = "move";
+
+        const x_percent = e.clientX / rightClick.clientWidth;
+        const y_percent = e.clientY / rightClick.clientHeight;
+
+        rightClick.innerHTML = `${x_percent}, ${y_percent}`;
 
         e.preventDefault();
     }
 
     rightClick.ontouchmove = (e) => {
-        rightClick.innerHTML = `${e.touches[0].clientX}, ${e.touches[0].clientY}`;
         transmitGyro = true;
+        return;
+        rightClick.innerHTML = `${e.touches[0].clientX}, ${e.touches[0].clientY}`;
     }
 
     rightClick.ondragend = (e) => {
@@ -733,16 +933,33 @@
 
     leftClick.ondragover = (e) => {
         console.log(e.clientX, e.clientY);
-        leftClick.innerHTML = `${e.clientX}, ${e.clientY}`;
+
+        const x_percent = e.clientX / leftClick.clientWidth;
+        const y_percent = e.clientY / leftClick.clientHeight;
+
+        leftClick.innerHTML = `${x_percent}, ${y_percent}`;
     }
 
     leftClick.ontouchmove = (e) => {
-        leftClick.innerHTML = `${e.touches[0].clientX}, ${e.touches[0].clientY}`;
+        const x_percent = (e.touches[0].clientX - leftClick.offsetLeft) / leftClick.clientWidth;
+        const y_percent = (e.touches[0].clientY - leftClick.offsetTop) / leftClick.clientHeight + 0.25;
+
+        // leftClick.innerHTML = `${x_percent}, ${y_percent}`;
         transmitGyro = true;
+
+        if (movementType != "gyro") {
+            socket.send(JSON.stringify({
+                type: "touch",
+                data: {
+                    x: x_percent,
+                    y: y_percent
+                }
+            }));
+        }
     }
 
     leftClick.ondragend = (e) => {
-        transmitGyro = false;
+        transmitGyro = false;        
     }
 </script>
 

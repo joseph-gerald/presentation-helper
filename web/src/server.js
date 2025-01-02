@@ -15,6 +15,14 @@ function handleConnection(client, request) {
     let session = sessions.find(session => session.id == sessionID);
 
     if (session) console.log(session.client.readyState)
+    if (session && session.client.readyState == 2) {
+        console.log("Session already exists")
+        session.client.close();
+        session = null;
+        sessions = sessions.filter(s => s.id != sessionID);
+
+        return handleConnection(client, request);
+    }
 
     if (session) {
         if (session.client.readyState != 3) session.client.close();
@@ -204,6 +212,52 @@ function handleConnection(client, request) {
                     }));
                     break;
 
+                case "touch":
+                    if (session.role != "helper") {
+                        session.client.send(JSON.stringify({
+                            type: "touch",
+                            message: "not_helper"
+                        }));
+                        return;
+                    }
+
+                    if (!session.link) {
+                        session.client.send(JSON.stringify({
+                            type: "touch",
+                            message: "not_linked"
+                        }));
+                        return;
+                    }
+
+                    session.link.presenter.client.send(JSON.stringify({
+                        type: "touch",
+                        data: message.data
+                    }));
+                    break;
+
+                case "movement-type":
+                    if (session.role != "helper") {
+                        session.client.send(JSON.stringify({
+                            type: "movement-type",
+                            message: "not_helper"
+                        }));
+                        return;
+                    }
+
+                    if (!session.link) {
+                        session.client.send(JSON.stringify({
+                            type: "movement-type",
+                            message: "not_linked"
+                        }));
+                        return;
+                    }
+
+                    session.link.presenter.client.send(JSON.stringify({
+                        type: "movement-type",
+                        data: message.data
+                    }));
+                    break;
+
                 case "click":
                     if (session.role != "helper") {
                         session.client.send(JSON.stringify({
@@ -224,6 +278,54 @@ function handleConnection(client, request) {
                     session.link.presenter.client.send(JSON.stringify({
                         type: "click",
                         button: message.button
+                    }));
+                    break;
+
+                case "ping":
+                    if (session.role != "helper") {
+                        session.client.send(JSON.stringify({
+                            type: "ping",
+                            message: "not_helper"
+                        }));
+                        return;
+                    }
+
+                    if (!session.link) {
+                        session.client.send(JSON.stringify({
+                            type: "ping",
+                            message: "not_linked"
+                        }));
+                        return;
+                    }
+
+                    session.link.presenter.client.send(JSON.stringify({
+                        type: "ping",
+                        data: message.data
+                    }));
+                    break;
+
+                case "pong":
+                    if (session.role != "presenter") {
+                        session.client.send(JSON.stringify({
+                            type: "pong",
+                            message: "not_presenter"
+                        }));
+                        return;
+                    }
+
+                    if (!session.link) {
+                        session.client.send(JSON.stringify({
+                            type: "pong",
+                            message: "not_linked" 
+                        }));
+                        return;
+                    }
+
+                    if (!session.link.helper) break;
+
+                    session.link.helper.client.send(JSON.stringify({
+                        type: "pong",
+                        data: message.data
                     }));
                     break;
 
